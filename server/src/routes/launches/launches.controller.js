@@ -1,11 +1,68 @@
 // model
-const { launches } = require('../../models/launches.model')
+const {
+  getAllLaunches,
+  addNewLaunch,
+  deleteLaunch,
+  abortLaunchById
+} = require('../../models/launches.model')
 
-function getAllLaunches (req, res) {
-  const allLaunches = Array.from(launches.values())
+const isDate = v => !isNaN(new Date(v))
+
+function httpGetAllLaunches (req, res) {
+  const allLaunches = getAllLaunches()
   return res.status(200).json(allLaunches)
 }
 
+function httpPostLaunch (req, res) {
+  const {
+    mission, rocket, destination, launchDate
+  } = req.body
+
+  if (!mission || !rocket || !destination || !launchDate) {
+    return res.status(400).json({
+      error: 'Missing required launch property'
+    })
+  }
+
+  if (!isDate(launchDate)) {
+    return res.status(400).json({
+      error: 'launchDate is invalid'
+    })
+  }
+
+  const newEntry = addNewLaunch({
+    mission, rocket, destination,
+    launchDate: new Date(launchDate)
+  })
+
+  return newEntry
+    ? res.status(201).json(newEntry)
+    : res.status(422).json({ error: 'Cannot process the data' })
+}
+
+function httpAbortLaunch (req, res) {
+  const { id } = req.params
+
+  if (!id) {
+    return res.status(400).json({
+      error: 'Missing id parameter'
+    })
+  }
+
+  const aborted = abortLaunchById(id)
+
+  return aborted
+    ? res.status(200).json({
+        message: `successfully aborted - [${id}].`,
+        abortedLaunch: aborted
+      })
+    : res.status(404).json({
+      error: `Launch item [${id}] was not found.`
+    })
+}
+
 module.exports = {
-  getAllLaunches
+  httpGetAllLaunches,
+  httpPostLaunch,
+  httpAbortLaunch
 }

@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path')
 const { parse } = require('csv-parse');
 
-const habitablePlanets = [];
+let habitablePlanets = null;
 
 // helpers
 function isHabitablePlanet(planet) {
@@ -20,6 +20,10 @@ function initDB () {
       }))
       .on('data', (data) => {
         if (isHabitablePlanet(data)) {
+          if (!habitablePlanets) {
+            habitablePlanets = []
+          }
+
           habitablePlanets.push(data);
         }
       })
@@ -32,7 +36,13 @@ function initDB () {
   })
 }
 
+async function getAllPlanets () {
+  if (!habitablePlanets) { await initDB() }
+  return habitablePlanets
+}
+
 module.exports = {
   planets: habitablePlanets,
+  getAllPlanets,
   initDB
 }
