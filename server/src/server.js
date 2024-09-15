@@ -1,13 +1,16 @@
 const http = require('http')
 
 const { initDB } = require('./models/planets.model')
+const { connectToDB } = require('./db.js')
 const app = require('./app')
 
 const PORT = process.env.API_PORT || 8000
+
 const server = http.createServer(app)
 
 async function startServer () {
   try {
+    await connectToDB()
     await initDB()
     server.listen(PORT, () => { console.log(`Listening on ${PORT}`) })
   } catch (err) {
