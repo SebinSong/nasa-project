@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path')
 const { parse } = require('csv-parse');
 
-let habitablePlanets = null;
+const planets = require('./planets.mongo')
 
 // helpers
 function isHabitablePlanet(planet) {
@@ -18,18 +18,15 @@ function initDB () {
         comment: '#',
         columns: true,
       }))
-      .on('data', (data) => {
+      .on('data', async (data) => {
         if (isHabitablePlanet(data)) {
-          if (!habitablePlanets) {
-            habitablePlanets = []
-          }
-
-          habitablePlanets.push(data);
+          await savePlanet(data)
         }
       })
       .on('error',(err) => reject(err))
-      .on('end', () => {
-        console.log(`DB ready to use - ${habitablePlanets.length} habitable planets found!`);
+      .on('end', async () => {
+        const allPlanets = await getAllPlanets()
+        console.log(`DB ready to use - ${allPlanets.length} habitable planets found!`);
         resolve()
       });
   
@@ -37,12 +34,23 @@ function initDB () {
 }
 
 async function getAllPlanets () {
-  if (!habitablePlanets) { await initDB() }
-  return habitablePlanets
+  const allPlanets = await planets.find({}, { '__v': 0 })
+  return allPlanets
+}
+
+async function savePlanet (planet) {
+  try {
+    await planets.updateOne(
+      { keplerName: planet.kepler_name }, // find filter
+      { keplerName: planet.kepler_name }, // update objects
+      { upsert: true } // create one if it doesn't exist
+    )
+  } catch (err) {
+    console.error(`Could not save a planet: ${err}`)
+  }
 }
 
 module.exports = {
-  planets: habitablePlanets,
   getAllPlanets,
   initDB
 }

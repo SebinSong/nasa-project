@@ -1,19 +1,19 @@
 // model
 const {
   getAllLaunches,
-  addNewLaunch,
+  scheduleNewLaunch,
   deleteLaunch,
   abortLaunchById
 } = require('../../models/launches.model')
 
 const isDate = v => !isNaN(new Date(v))
 
-function httpGetAllLaunches (req, res) {
-  const allLaunches = getAllLaunches()
+async function httpGetAllLaunches (req, res) {
+  const allLaunches = await getAllLaunches()
   return res.status(200).json(allLaunches)
 }
 
-function httpPostLaunch (req, res) {
+async function httpPostLaunch (req, res) {
   const {
     mission, rocket, destination, launchDate
   } = req.body
@@ -30,7 +30,7 @@ function httpPostLaunch (req, res) {
     })
   }
 
-  const newEntry = addNewLaunch({
+  const newEntry = await scheduleNewLaunch({
     mission, rocket, destination,
     launchDate: new Date(launchDate)
   })
