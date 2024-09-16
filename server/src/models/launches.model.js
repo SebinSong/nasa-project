@@ -13,8 +13,6 @@ const launch = {
   success: true
 }
 
-saveLaunch(launch)
-
 async function saveLaunch (launch) {
   try {
     const planet = await planets.findOne({
@@ -25,13 +23,13 @@ async function saveLaunch (launch) {
       throw new Error('No matching planet found.')
     }
 
-    const savedLaunch = await launches.updateOne(
+    const res = await launches.findOneAndUpdate(
       { flightNumber: launch.flightNumber },
       launch,
       { upsert: true }
     )
-    
-    return savedLaunch
+
+    return res === null
   } catch (err) {
     console.error(`Could not save a launch: ${err}`)
   }
@@ -49,9 +47,8 @@ async function getAllLaunches () {
   return allLaunches
 }
 
-function launchExists (launchId) {
-  console.log('!@# launches.has(launchId): ', launches.has(launchId))
-  return launches.has(launchId)
+async function launchExists (flightNumber) {
+  return await launches.findOne({ flightNumber })
 }
 
 async function scheduleNewLaunch (launch) {
@@ -63,22 +60,23 @@ async function scheduleNewLaunch (launch) {
     success: true
   })
 
-  const saved = await saveLaunch(newLaunch)
-  return saved || null
+  return await saveLaunch(newLaunch)
 }
 
 function deleteLaunch (id) {
   return launches.delete(id)
 }
 
-function abortLaunchById (launchId) {
-  if (!launchExists(launchId)) { return null }
+async function abortLaunchById (launchId) {
+  const aborted = await launches.updateOne(
+    { flightNumber: launchId },
+    {
+      upcoming: false,
+      success:false
+    }
+  )
 
-  const launch = launches.get(launchId)
-  launch.upcoming = false
-  launch.success = false
-
-  return launch
+  return aborted.acknowledged && aborted.modifiedCount === 1
 }
 
 module.exports = {
@@ -87,5 +85,6 @@ module.exports = {
   scheduleNewLaunch,
   saveLaunch,
   deleteLaunch,
-  abortLaunchById
+  abortLaunchById,
+  launchExists
 }
