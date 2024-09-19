@@ -1,6 +1,9 @@
+const path = require('path')
 const mongoose = require('mongoose')
 
-const MONGO_URL = 'mongodb+srv://nasa-api:sebin123@sebinfreecluster.vcv3dkf.mongodb.net/nasa?retryWrites=true&w=majority&appName=SebinFreeCluster'
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') })
+
+const MONGO_URL = process.env.MONGO_URL
 
 mongoose.connection.once('open', () => {
   console.log('MongoDB connection ready!')

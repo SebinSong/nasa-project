@@ -6,11 +6,12 @@ const {
   abortLaunchById,
   launchExists
 } = require('../../models/launches.model')
+const { getPagination } = require('../../helpers')
 
 const isDate = v => !isNaN(new Date(v))
 
 async function httpGetAllLaunches (req, res) {
-  const allLaunches = await getAllLaunches()
+  const allLaunches = await getAllLaunches(getPagination(req.query))
   return res.status(200).json(allLaunches)
 }
 
